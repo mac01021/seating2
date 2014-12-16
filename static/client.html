@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html ng-app>
+<head>
+	<script type="text/javascript"
+		src="http://ajax.googleapis.com/ajax/libs/angularjs/1.1.5/angular.min.js">
+	</script>
+	<script type="text/javascript"
+		src="client.js">
+	</script>
+	<style type="text/css">
+
+		body {
+			font-family: "Century Gothic", "Verdana", "Arial", sans-serif;
+			background-color: #c4a266;
+		}
+
+
+
+		.centered {
+			margin-left:auto;
+			margin-right:auto;
+			width:80%;
+			background-color:#733910;
+			border-radius: 15px;
+			padding:0px;
+		}
+
+		.panel {
+			width:80%;
+			background-color:#733910;
+			border-radius: 15px;
+			padding:0px;
+			cell-padding:0px;
+		}
+
+
+		input.filt{
+			-moz-border-radius: 15px;
+			border-radius: 15px;
+			border: solid 1px black;
+			padding: 5px;
+			width: 180px;
+		}
+
+		.odd {
+			background-color:#d1174c;
+			margin:0;
+			padding:0;
+		}
+		.even {
+			background-color:#c4a266;
+			margin:0;
+			padding:0;
+		}
+		.lines {
+			-moz-border-radius: 8px;
+			border-radius: 8px;
+			margin:0;
+			padding:0;
+		}
+
+	</style>
+</head>
+
+
+
+
+<body ng-controller="EventHandler" >
+    <br><br>
+    <br>
+    <div class="centered" ><center>
+	<br>
+	<table class="panel">
+		<thead>
+			<tr><td colspan="3">
+			<p style="font-size:16pt; color:white;">
+			Contien & Liang's Wedding Check-in</p></td>
+			</tr>
+			<tr>
+				<td>
+					&nbsp;&nbsp;<input class="filt" type="text" ng-model="Filter.name" placeholder="Search Name" style="width: 95%;" />
+				</td>
+				<td colspan="2">
+					&nbsp;&nbsp;<input class="filt" type="text" ng-model="Filter.table" placeholder="Search Table" style="width: 95%;" />
+				</td>
+			</tr>
+<tr height=10></tr>
+		</thead>
+		<tbody>
+			<tr ng-class-even="'even'" ng-class-odd="'odd'" ng-repeat="guest in Chart | filter: Filter | orderBy: guest.name" >
+				<td style="width:100px;" class="lines">
+					&nbsp;&nbsp;{{guest.name}}
+				</td>
+				<td style="width:100px;" class="lines">
+					&nbsp;&nbsp;{{guest.table}}
+				</td>
+				<td style="width:15px;" class="lines"><center>
+					<input name="{{guest.name}}"
+						type="checkbox"
+						ng-model="Arrived[guest.name]"
+						ng-value="true"
+						ng-change="Report(guest.name)"/>
+				</center>
+				</td>
+			</tr>
+		</tbody>
+	</table>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;{{ Status }}
+	<br></center>
+    </div>
+</body>
+</html>
+
