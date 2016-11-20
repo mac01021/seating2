@@ -4,21 +4,9 @@
 
 (def chart (db/get-saved-chart))
 
-(def state (atom {:socks #{}
-                  :arrivals (db/get-saved-arrivals)
+(def state (atom {:arrivals (db/get-saved-arrivals)
                   :last-update nil}))
 
-(defn connect
-  [srv client]
-  (-> srv
-      (update-in [:socks] conj client)
-      (assoc-in [:last-update] [:connected client])))
-
-(defn disconnect
-  [srv client]
-  (-> srv
-      (update-in [:socks] disj client)
-      (assoc-in [:last-update] [:disconnected client])))
 
 (defn arrive
   [srv guest]
@@ -26,33 +14,29 @@
       (update-in [:arrivals] conj guest)
       (assoc-in [:last-update] [:arrived guest])))
 
+(defn arrive! [guest]
+  (swap! state arrive guest))
+
 (defn disarrive
   [srv guest]
   (-> srv
       (update-in [:arrivals] disj guest)
       (assoc-in [:last-update] [:disarrived guest])))
 
+(defn disarrive! [guest]
+  (swap! state disarrive guest))
+
+(defn add-update-watch [k f]
+  "Pass in a key and a function that takes a 2-vector (action, guest)"
+  (let [wf (fn [k r olds news] (f (:last-update news)))]
+    (add-watch state k wf)))
+
+(defn remove-update-watch [k]
+  (remove-watch state k))
+
+(defn arrivals-so-far [] (:arrivals @state))
 
 
 
 
-;;protocol stuff
-(defn to-msg [[action guest]]
-  (cond
-    (= action :arrived) guest
-    (= action :disarrived) (str "!" guest)
-    :else nil))
-
-
-(defn from-msg [msg]
-  (cond
-    (= (first msg) \!) [:disarrived (subs msg 1)]
-    :else              [:arrived msg]))
-
-
-(defn choose-request-handler  [msg]
-  (let [[action guest] (from-msg msg)]
-    (if (= action :disarrived)
-      #(disarrive %1 guest)
-      #(arrive %1 guest))))
 

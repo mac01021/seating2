@@ -9,13 +9,27 @@
   (:gen-class))
 
 
+;;protocol stuff
+(defn to-msg [[action guest]]
+  (cond
+    (= action :arrived) guest
+    (= action :disarrived) (str "!" guest)
+    :else nil))
+
+(defn from-msg [msg]
+  (cond
+    (= (first msg) \!) [:disarrived (subs msg 1)]
+    :else              [:arrived msg]))
+
+
 
 (defn send-json! [chan msg]
+  "jsonify a message and then send it on the given channel"
   (send! chan (json/write-str msg)))
 
 
-
 (defn send-client-html [req]
+  "return a response containing the single-page app"
   {:status 200
    :headers {"Content-Type" "text/html"}
    :body (file "static/client.html")})
@@ -28,30 +42,27 @@
     (println "New client!")
 
     (send-json! chan model/chart)
+    (model/add-update-watch chan (fn [event] (->> event (to-msg)
+                                                        (send-json! chan))))
+    (doseq [guest (model/arrivals-so-far)]
+      (send-json! chan guest)
+      (println "Announcing to client:" guest))
 
-    (let [{:keys [arrivals]} (swap! model/state model/connect chan)]
-       (doseq [guest arrivals]
-          (send-json! chan guest)
-          (println "Announcing to client:" guest)))
 
     (on-close chan (fn [status]
                      (println "channel closed: " status)
-                     (swap! model/state model/disconnect chan)))
+                     (model/remove-update-watch chan)))
 
     (on-receive chan (fn [msg]
                        (println "recieved data: " msg)
-                       (swap! model/state (model/choose-request-handler msg))))))
+                       (let [[action guest] (from-msg msg)]
+                         (if (= :disarrived action)
+                           (model/disarrive! guest)
+                           (model/arrive! guest)))))))
 
 
 
-(defn broadcast [k r old new]
-  (let [{:keys [socks last-update]} new
-        msg (model/to-msg last-update)]
-    (when-not (nil? msg)
-      (doseq [sock socks]
-        (send-json! sock msg)))))
 
-(add-watch model/state :monitor broadcast)
 
 
 
